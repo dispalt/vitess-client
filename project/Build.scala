@@ -8,8 +8,9 @@ import org.scalafmt.sbt.ScalaFmtPlugin.autoImport._
 import sbt._
 import sbt.plugins.JvmPlugin
 import sbt.Keys._
-import sbtrelease.ReleasePlugin.autoImport.{ReleaseStep, _}
+import sbtrelease.ReleasePlugin.autoImport.{ ReleaseStep, _ }
 import sbtrelease.ReleaseStateTransformations._
+import com.typesafe.sbt.pgp.PgpKeys._
 
 object Build extends AutoPlugin {
 
@@ -146,4 +147,12 @@ object Build extends AutoPlugin {
       </exclusions>
     </dependency>
   }
+
+  def preventPublication =
+    Seq(publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
+        publishArtifact := false,
+        publish := (),
+        publishLocalSigned := (), // doesn't work
+        publishSigned := (), // doesn't work
+        packagedArtifacts := Map.empty) // doesn't work - https://github.com/sbt/sbt-pgp/issues/42
 }

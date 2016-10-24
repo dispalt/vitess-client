@@ -6,7 +6,8 @@ lazy val `vitess` =
   project
     .in(file("."))
     .enablePlugins(AutomateHeaderPlugin, GitVersioning)
-    .settings(publish := {}) aggregate (`vitess-shade`, `vitess-quill`)
+    .settings(Build.preventPublication)
+    .aggregate(`vitess-shade`, `vitess-quill`)
 
 lazy val `vitess-client` =
   project
@@ -23,8 +24,8 @@ lazy val `vitess-shade` =
       // Just get whatever asset is built in vitess-client
       exportedProducts in Compile := (exportedProducts in Compile in `vitess-client`).value,
       libraryDependencies ++= Seq(Library.slf4j, Library.scalaPb, Library.grpc),
-      assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false,
-                                                                            includeDependency = true),
+      assemblyOption in assembly := (assemblyOption in assembly).value
+        .copy(includeScala = false, includeDependency = true),
       assemblyShadeRules in assembly := Seq(ShadeRule.rename("io.netty.**" -> "shadenetty.@1").inAll),
       assemblyMergeStrategy in assembly := {
         case x if x.endsWith("io.netty.versions.properties") => MergeStrategy.first
@@ -59,5 +60,5 @@ lazy val `vitess-quill` =
       libraryDependencies ++= Seq(
         Library.`quill-sql`
       ),
-      Build.releaseSettings
+      Build.publishSettings
     )
