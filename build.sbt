@@ -46,27 +46,13 @@ lazy val `vitess-shade` =
       },
       addArtifact(artifact in Compile, assembly)
     )
-    .settings(
-      releaseProcess := Seq[ReleaseStep](
-        checkSnapshotDependencies,
-        inquireVersions,
-        runClean,
-        runTest,
-        setReleaseVersion,
-        commitReleaseVersion,
-        tagRelease,
-        ReleaseStep(action = Command.process("publishSigned", _)),
-        setNextVersion,
-        commitNextVersion,
-        ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
-        pushChanges
-      )
-    )
+    .settings(Build.releaseSettings)
 
 lazy val `vitess-quill` =
   project.in(file("vitess-quill")).dependsOn(`vitess-shade`)
   .settings(
     libraryDependencies ++= Seq(
       Library.`quill-sql`
-    )
+    ),
+    Build.releaseSettings
   )

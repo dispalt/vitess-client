@@ -8,6 +8,8 @@ import org.scalafmt.sbt.ScalaFmtPlugin.autoImport._
 import sbt._
 import sbt.plugins.JvmPlugin
 import sbt.Keys._
+import sbtrelease.ReleasePlugin.autoImport.{ReleaseStep, _}
+import sbtrelease.ReleaseStateTransformations._
 
 object Build extends AutoPlugin {
 
@@ -22,7 +24,6 @@ object Build extends AutoPlugin {
       organization := "io.github.dispalt",
       licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
       homepage := Some(url("http://github.com/dispalt/vitess")),
-      version := "0.1.0",
       description := "sri relay package.",
       mappings.in(Compile, packageBin) += baseDirectory.in(ThisBuild).value / "LICENSE" -> "LICENSE",
       scalaVersion := Version.Scala,
@@ -69,6 +70,23 @@ object Build extends AutoPlugin {
           </developer>
         </developers>
     )
+
+  def releaseSettings = publishSettings ++ Seq(
+    releaseProcess := Seq[ReleaseStep](
+      checkSnapshotDependencies,
+      inquireVersions,
+      runClean,
+      runTest,
+      setReleaseVersion,
+      commitReleaseVersion,
+      tagRelease,
+      ReleaseStep(action = Command.process("publishSigned", _)),
+      setNextVersion,
+      commitNextVersion,
+      ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+      pushChanges
+    )
+  )
 
   def replaceDep(document: xml.Node, replacedNode: xml.Node): xml.Node = {
 
