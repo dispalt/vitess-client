@@ -3,7 +3,10 @@ import ReleaseTransformations._
 scalaVersion := Version.Scala
 
 lazy val `vitess` =
-  project.in(file(".")).enablePlugins(AutomateHeaderPlugin, GitVersioning).settings(Build.publishSettings)
+  project
+    .in(file("."))
+    .enablePlugins(AutomateHeaderPlugin, GitVersioning)
+    .settings(publish := {}) aggregate (`vitess-shade`, `vitess-quill`)
 
 lazy val `vitess-client` =
   project
@@ -49,10 +52,12 @@ lazy val `vitess-shade` =
     .settings(Build.releaseSettings)
 
 lazy val `vitess-quill` =
-  project.in(file("vitess-quill")).dependsOn(`vitess-shade`)
-  .settings(
-    libraryDependencies ++= Seq(
-      Library.`quill-sql`
-    ),
-    Build.releaseSettings
-  )
+  project
+    .in(file("vitess-quill"))
+    .dependsOn(`vitess-shade`)
+    .settings(
+      libraryDependencies ++= Seq(
+        Library.`quill-sql`
+      ),
+      Build.releaseSettings
+    )
