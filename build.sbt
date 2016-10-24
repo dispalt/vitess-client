@@ -13,8 +13,6 @@ lazy val `vitess-client` =
               ),
               libraryDependencies ++= Library.Client.dependenciesToShade ++ Library.Client.nonShadedDependencies)
 
-
-
 lazy val `vitess-shade` =
   project
     .in(file("vitess-shade"))
@@ -22,8 +20,8 @@ lazy val `vitess-shade` =
       // Just get whatever asset is built in vitess-client
       exportedProducts in Compile := (exportedProducts in Compile in `vitess-client`).value,
       libraryDependencies ++= Seq(Library.slf4j, Library.scalaPb, Library.grpc),
-      assemblyOption in assembly := (assemblyOption in assembly).value
-        .copy(includeScala = false, includeDependency = true),
+      assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false,
+                                                                            includeDependency = true),
       assemblyShadeRules in assembly := Seq(ShadeRule.rename("io.netty.**" -> "shadenetty.@1").inAll),
       assemblyMergeStrategy in assembly := {
         case x if x.endsWith("io.netty.versions.properties") => MergeStrategy.first
@@ -33,7 +31,8 @@ lazy val `vitess-shade` =
       },
       publishArtifact in (Compile, packageBin) := false,
       pomPostProcess := { (node: xml.Node) =>
-        Build.replaceDep(node, Build.shadedMinusNetty(Library.grpc.organization, Library.grpc.name, Library.grpc.revision))
+        Build.replaceDep(node,
+                         Build.shadedMinusNetty(Library.grpc.organization, Library.grpc.name, Library.grpc.revision))
       },
       assemblyExcludedJars in assembly := {
         val cp = (fullClasspath in assembly).value
@@ -47,22 +46,27 @@ lazy val `vitess-shade` =
       },
       addArtifact(artifact in Compile, assembly)
     )
+    .settings(
+      releaseProcess := Seq[ReleaseStep](
+        checkSnapshotDependencies,
+        inquireVersions,
+        runClean,
+        runTest,
+        setReleaseVersion,
+        commitReleaseVersion,
+        tagRelease,
+        ReleaseStep(action = Command.process("publishSigned", _)),
+        setNextVersion,
+        commitNextVersion,
+        ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+        pushChanges
+      )
+    )
 
 lazy val `vitess-quill` =
-  project.in(file("vitess-quill"))
-//    .settings(
-//      releaseProcess := Seq[ReleaseStep](
-//        checkSnapshotDependencies,
-//        inquireVersions,
-//        runClean,
-//        runTest,
-//        setReleaseVersion,
-//        commitReleaseVersion,
-//        tagRelease,
-//        ReleaseStep(action = Command.process("publishSigned", _)),
-//        setNextVersion,
-//        commitNextVersion,
-//        ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
-//        pushChanges
-//      )
-//    )
+  project.in(file("vitess-quill")).dependsOn(`vitess-shade`)
+  .settings(
+    libraryDependencies ++= Seq(
+      Library.`quill-sql`
+    )
+  )
