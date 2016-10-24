@@ -48,21 +48,7 @@ lazy val `vitess-shade` =
         }
       },
       addArtifact(artifact in Compile, assembly),
-      Build.publishSettings,
-      releaseProcess := Seq[ReleaseStep](
-        checkSnapshotDependencies,
-        inquireVersions,
-        runClean,
-        runTest,
-        setReleaseVersion,
-        commitReleaseVersion,
-        tagRelease,
-        ReleaseStep(action = Command.process("publishSigned", _)),
-        setNextVersion,
-        commitNextVersion,
-        ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
-        pushChanges
-      )
+      Build.publishSettings
     )
 
 lazy val `vitess-quill` =

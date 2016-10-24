@@ -44,7 +44,22 @@ object Build extends AutoPlugin {
       // Git settings
       git.useGitDescribe := true,
       // Header settings
-      headers := Map("scala" -> Apache2_0("2016", "Dan Di Spaltro"))
+      headers := Map("scala" -> Apache2_0("2016", "Dan Di Spaltro")),
+      // Release process
+      releaseProcess := Seq[ReleaseStep](
+        checkSnapshotDependencies,
+        inquireVersions,
+        runClean,
+        runTest,
+        setReleaseVersion,
+        commitReleaseVersion,
+        tagRelease,
+        ReleaseStep(action = Command.process("publishSigned", _)),
+        setNextVersion,
+        commitNextVersion,
+        ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+        pushChanges
+      )
     )
 
   def publishSettings =
