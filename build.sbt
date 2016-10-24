@@ -47,9 +47,9 @@ lazy val `vitess-shade` =
           case _ => true
         }
       },
-      addArtifact(artifact in Compile, assembly)
+      addArtifact(artifact in Compile, assembly),
+      Build.releaseSettings
     )
-    .settings(Build.releaseSettings)
 
 lazy val `vitess-quill` =
   project
