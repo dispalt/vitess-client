@@ -30,6 +30,7 @@ lazy val `vitess-shade` =
         val e = (exportedProducts in Compile in `vitess-client`).value
         f ++ e
       },
+//      fullClasspath in assembly := (fullClasspath in Compile).value,
       // Protobuf is already included so we only add slf4j
       libraryDependencies ++= Seq(Library.slf4j),
       assemblyOption in assembly := (assemblyOption in assembly).value
@@ -62,10 +63,10 @@ lazy val `vitess-shade` =
 lazy val `vitess-quill` =
   project
     .in(file("vitess-quill"))
-    .dependsOn(`vitess-shade`)
     .settings(
       libraryDependencies ++= Seq(
         Library.`quill-sql`
       ),
+      unmanagedJars in Compile := Seq((assembly in (`vitess-shade`, assembly)).value).classpath,
       Build.publishSettings
     )
