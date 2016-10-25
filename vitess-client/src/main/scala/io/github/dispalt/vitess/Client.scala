@@ -12,8 +12,12 @@ import io.grpc.ManagedChannel
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.netty.NettyChannelBuilder
 import org.slf4j.LoggerFactory
+import tabletmanagerdata.tabletmanagerdata.{ApplySchemaRequest, ApplySchemaResponse}
+import tabletmanagerservice.tabletmanagerservice.TabletManagerGrpc
+import vtctldata.vtctldata.ExecuteVtctlCommandRequest
+import vtctlservice.vtctlservice.VtctlGrpc
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 case class VitessCallerCtx(callerId: Option[CallerID])
 
@@ -21,7 +25,7 @@ object VitessCallerCtx {
   val empty = new VitessCallerCtx(None)
 }
 
-class Client(channel: ManagedChannel, keyspace: String) {
+class Client(channel: ManagedChannel, keyspace: String) extends BaseClient(channel, keyspace) {
 
   val logger = LoggerFactory.getLogger(classOf[Client])
 
@@ -34,17 +38,7 @@ class Client(channel: ManagedChannel, keyspace: String) {
          keyspace)
   }
 
-  val client = VitessGrpc.stub(channel)
-
-  def closeBlocking(): Unit = {
-    channel.shutdown()
-    channel.awaitTermination(30, TimeUnit.SECONDS)
-  }
-
-  def close()(implicit ec: ExecutionContext): Future[Unit] = Future {
-    channel.shutdown()
-    channel.awaitTermination(30, TimeUnit.SECONDS)
-  }
+  val client        = VitessGrpc.stub(channel)
 
   // Context ctx, String query, Map<String, ?> bindVars, TabletType tabletType
   def execute(query: String, bind: Map[String, _], tabletType: TabletType)(implicit ctx: VitessCallerCtx,
@@ -114,4 +108,5 @@ class Client(channel: ManagedChannel, keyspace: String) {
     }
 
   }
+
 }
