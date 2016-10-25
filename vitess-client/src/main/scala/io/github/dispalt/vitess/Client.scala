@@ -9,6 +9,7 @@ import com.youtube.vitess.proto.vtgate._
 import com.youtube.vitess.proto.vtrpc.CallerID
 import io.github.dispalt.vitess.Response._
 import io.grpc.ManagedChannel
+import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.netty.NettyChannelBuilder
 import org.slf4j.LoggerFactory
 
@@ -25,7 +26,12 @@ class Client(channel: ManagedChannel, keyspace: String) {
   val logger = LoggerFactory.getLogger(classOf[Client])
 
   def this(host: String, port: Int, keyspace: String) = {
-    this(NettyChannelBuilder.forAddress(host, port).usePlaintext(true).build, keyspace)
+    this(NettyChannelBuilder
+           .forAddress(host, port)
+           .nameResolverFactory(new DnsNameResolverProvider())
+           .usePlaintext(true)
+           .build,
+         keyspace)
   }
 
   val client = VitessGrpc.stub(channel)

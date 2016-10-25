@@ -24,8 +24,8 @@ object Build extends AutoPlugin {
       // Core settings
       organization := "io.github.dispalt",
       licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
-      homepage := Some(url("http://github.com/dispalt/vitess")),
-      description := "sri relay package.",
+      homepage := Some(url("https://github.com/dispalt/vitess-client")),
+      description := "Vitess client including quill bindings.",
       mappings.in(Compile, packageBin) += baseDirectory.in(ThisBuild).value / "LICENSE" -> "LICENSE",
       scalaVersion := Version.Scala,
       crossScalaVersions := Vector(scalaVersion.value),
@@ -47,6 +47,7 @@ object Build extends AutoPlugin {
       // Header settings
       headers := Map("scala" -> Apache2_0("2016", "Dan Di Spaltro")),
       // Release process
+      publishMavenStyle := true,
       releaseProcess := Seq[ReleaseStep](
         checkSnapshotDependencies,
         inquireVersions,
@@ -74,9 +75,9 @@ object Build extends AutoPlugin {
       },
       pomExtra :=
         <scm>
-          <connection>scm:git:git://github.com/dispalt/sri-vdom.git</connection>
-          <developerConnection>scm:git:ssh://github.com:dispalt/sri-vdom.git</developerConnection>
-          <url>http://github.com/dispalt/sri-vdom/tree/master</url>
+          <connection>scm:git:https://github.com/dispalt/vitess-client.git</connection>
+          <developerConnection>scm:git:git@github.com:dispalt/vitess-client.git</developerConnection>
+          <url>http://github.com/dispalt/vitess-client/tree/master</url>
         </scm>
         <developers>
           <developer>
@@ -103,50 +104,6 @@ object Build extends AutoPlugin {
       pushChanges
     )
   )
-
-  def replaceDep(document: xml.Node, replacedNode: xml.Node): xml.Node = {
-
-    val gid = (replacedNode \ "groupId").head.text
-    val aid = (replacedNode \ "artifactId").head.text
-
-    def find(deps: Seq[xml.Node], parent: xml.Node): Seq[xml.Node] = deps map {
-      case elem: xml.Elem if elem.label == "dependency" =>
-        val thisGid = (elem \ "groupId").head.text
-        val thisAid = (elem \ "artifactId").head.text
-        if (thisGid == gid && thisAid == aid) {
-          replacedNode
-        } else {
-          elem
-        }
-      case node => node
-    }
-
-    document match {
-      case elem: xml.Elem =>
-        val child = if (elem.label == "dependencies") {
-          find(elem.child, elem)
-        } else {
-          elem.child.map(replaceDep(_, replacedNode))
-        }
-        xml.Elem(elem.prefix, elem.label, elem.attributes, elem.scope, false, child: _*)
-      case _ =>
-        document
-    }
-  }
-
-  def shadedMinusNetty(groupId: String, artifactId: String, version: String): scala.xml.Node = {
-    <dependency>
-      <groupId>{groupId}</groupId>
-      <artifactId>{artifactId}</artifactId>
-      <version>{version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>io.netty</groupId>
-          <artifactId>netty-codec-http2</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-  }
 
   def preventPublication =
     Seq(publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),

@@ -7,7 +7,7 @@ lazy val `vitess` =
     .in(file("."))
     .enablePlugins(AutomateHeaderPlugin, GitVersioning)
     .settings(Build.preventPublication)
-    .aggregate(`vitess-shade`, `vitess-quill`)
+    .aggregate(`vitess-shade`, `vitess-quill`, `vitess-client`)
 
 lazy val `vitess-client` =
   project
@@ -15,7 +15,8 @@ lazy val `vitess-client` =
     .settings(PB.targets in Compile := Seq(
                 scalapb.gen() -> (sourceManaged in Compile).value
               ),
-              libraryDependencies ++= Library.Client.dependenciesToShade ++ Library.Client.nonShadedDependencies)
+              libraryDependencies ++= Library.Client.dependenciesToShade ++ Library.Client.nonShadedDependencies,
+              Build.publishSettings)
 
 lazy val `vitess-shade` =
   project
@@ -23,10 +24,20 @@ lazy val `vitess-shade` =
     .settings(
       // Just get whatever asset is built in vitess-client
       exportedProducts in Compile := (exportedProducts in Compile in `vitess-client`).value,
-      libraryDependencies ++= Seq(Library.slf4j, Library.scalaPb, Library.grpc),
+      // This is the total classpath stolen from the non shaded version
+      fullClasspath in assembly := {
+        val f = (externalDependencyClasspath in Compile in `vitess-client`).value
+        val e = (exportedProducts in Compile in `vitess-client`).value
+        f ++ e
+      },
+      // Protobuf is already included so we only add slf4j
+      libraryDependencies ++= Seq(Library.slf4j),
       assemblyOption in assembly := (assemblyOption in assembly).value
         .copy(includeScala = false, includeDependency = true),
-      assemblyShadeRules in assembly := Seq(ShadeRule.rename("io.netty.**" -> "shadenetty.@1").inAll),
+      // We only really need to rename netty because of shitty 4.0 vs 4.1 issues.
+      assemblyShadeRules in assembly := Seq(
+        ShadeRule.rename("io.netty.**" -> "shadenetty.@1").inAll
+      ),
       assemblyMergeStrategy in assembly := {
         case x if x.endsWith("io.netty.versions.properties") => MergeStrategy.first
         case x =>
@@ -34,18 +45,14 @@ lazy val `vitess-shade` =
           oldStrategy(x)
       },
       publishArtifact in (Compile, packageBin) := false,
-      pomPostProcess := { (node: xml.Node) =>
-        Build.replaceDep(node,
-                         Build.shadedMinusNetty(Library.grpc.organization, Library.grpc.name, Library.grpc.revision))
-      },
       assemblyExcludedJars in assembly := {
         val cp = (fullClasspath in assembly).value
         cp filter {
-          // We have to do it this way because of how protocompiler stuff works.
+          // We keep google protobuf and slf4j since they work with most stuff
           case f if f.data.getName.startsWith("protobuf-java") => true
-          case f if f.data.getName.startsWith("netty")         => false
-          // Skip the rest
-          case _ => true
+          case f if f.data.getName.startsWith("slf4j")         => true
+          // Include the rest
+          case f => false
         }
       },
       addArtifact(artifact in Compile, assembly),

@@ -22,7 +22,7 @@ import scala.reflect.classTag
 import scala.util.{ DynamicVariable, Failure, Success, Try }
 
 class VitessContext[Naming <: NamingStrategy](client: Client, _ctx: VitessCallerCtx, tabletType: TabletType)
-  extends SqlContext[VitessDialect, Naming]
+    extends SqlContext[VitessDialect, Naming]
     with VitessEncoder
     with VitessDecoder {
 
@@ -76,9 +76,9 @@ class VitessContext[Naming <: NamingStrategy](client: Client, _ctx: VitessCaller
   }
 
   def executeQuery[T](
-    sql: String,
-    prepare: PrepareRow => PrepareRow = identity,
-    extractor: Row => T = identity[Row] _
+      sql: String,
+      prepare: PrepareRow => PrepareRow = identity,
+      extractor: Row => T = identity[Row] _
   )(implicit ec: ExecutionContext, ctx: VitessCallerCtx): Future[List[T]] = {
     logger.info(sql)
     val bq = prepare(BoundQuery(sql = sql))
@@ -87,14 +87,14 @@ class VitessContext[Naming <: NamingStrategy](client: Client, _ctx: VitessCaller
       cli =>
         handleEx(cli.execute(bq, tabletType)) { f =>
           f.value.map(extractor).toList
-        }
+      }
     )
 
   }
 
   def executeAction[T](
-    sql: String,
-    prepare: PrepareRow => PrepareRow = identity
+      sql: String,
+      prepare: PrepareRow => PrepareRow = identity
   )(implicit ec: ExecutionContext, ctx: VitessCallerCtx): Future[Long] = {
     logger.info(sql)
     val bq = prepare(BoundQuery(sql = sql))
@@ -103,12 +103,12 @@ class VitessContext[Naming <: NamingStrategy](client: Client, _ctx: VitessCaller
       cli =>
         handleEx(cli.execute(bq, tabletType)) { f =>
           f.value.rowsAffected
-        }
+      }
     )
   }
 
   def transaction[T](f: TransactionalExecutionContext => Future[T])(implicit ctx: VitessCallerCtx,
-    ec: ExecutionContext) = {
+                                                                    ec: ExecutionContext) = {
     val p = Promise[T]()
     client.begin() onComplete {
       case Success(session) =>
@@ -132,7 +132,7 @@ class VitessContext[Naming <: NamingStrategy](client: Client, _ctx: VitessCaller
   }
 
   def executeBatchAction(groups: List[BatchGroup])(implicit ec: ExecutionContext,
-    ctx: VitessCallerCtx): Future[List[Long]] =
+                                                   ctx: VitessCallerCtx): Future[List[Long]] =
     Future.sequence {
       groups.map {
         case BatchGroup(sql, prepare) =>
