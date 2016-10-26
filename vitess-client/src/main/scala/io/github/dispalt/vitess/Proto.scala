@@ -2,7 +2,7 @@ package io.github.dispalt.vitess
 
 import com.google.common.primitives.UnsignedLong
 import com.google.protobuf.ByteString
-import com.youtube.vitess.proto.query.{BindVariable, BoundQuery, Type, Value}
+import com.youtube.vitess.proto.query.{ BindVariable, BoundQuery, Type, Value }
 
 object Proto {
 

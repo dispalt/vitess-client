@@ -36,7 +36,7 @@ class VtctldClient(channel: ManagedChannel, keyspace: String) extends BaseClient
 
     val so = new StreamObserver[ExecuteVtctlCommandResponse] {
       def onError(t: Throwable): Unit = t match {
-          // Probably need to come up with a better solution.
+        // Probably need to come up with a better solution.
         case grpc: StatusRuntimeException
             if grpc.getStatus.getDescription.indexOf("does not introduce any table definition change.") > 0 =>
           p.success(acc)

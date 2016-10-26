@@ -6,17 +6,17 @@ import io.grpc.ManagedChannel
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.netty.NettyChannelBuilder
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class BaseClient(channel: ManagedChannel, keyspace: String) {
 
   def this(host: String, port: Int, keyspace: String) = {
     this(NettyChannelBuilder
-      .forAddress(host, port)
-      .nameResolverFactory(new DnsNameResolverProvider())
-      .usePlaintext(true)
-      .build,
-      keyspace)
+           .forAddress(host, port)
+           .nameResolverFactory(new DnsNameResolverProvider())
+           .usePlaintext(true)
+           .build,
+         keyspace)
   }
 
   def closeBlocking(): Unit = {

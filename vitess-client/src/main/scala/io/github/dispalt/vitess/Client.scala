@@ -11,13 +11,14 @@ import io.github.dispalt.vitess.Response._
 import io.grpc.ManagedChannel
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.netty.NettyChannelBuilder
+import io.grpc.stub.StreamObserver
 import org.slf4j.LoggerFactory
-import tabletmanagerdata.tabletmanagerdata.{ApplySchemaRequest, ApplySchemaResponse}
+import tabletmanagerdata.tabletmanagerdata.{ ApplySchemaRequest, ApplySchemaResponse }
 import tabletmanagerservice.tabletmanagerservice.TabletManagerGrpc
 import vtctldata.vtctldata.ExecuteVtctlCommandRequest
 import vtctlservice.vtctlservice.VtctlGrpc
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 case class VitessCallerCtx(callerId: Option[CallerID])
 
@@ -38,7 +39,7 @@ class Client(channel: ManagedChannel, keyspace: String) extends BaseClient(chann
          keyspace)
   }
 
-  val client        = VitessGrpc.stub(channel)
+  val client = VitessGrpc.stub(channel)
 
   // Context ctx, String query, Map<String, ?> bindVars, TabletType tabletType
   def execute(query: String, bind: Map[String, _], tabletType: TabletType)(implicit ctx: VitessCallerCtx,
@@ -76,6 +77,32 @@ class Client(channel: ManagedChannel, keyspace: String) extends BaseClient(chann
                        keyspace = keyspace,
                        session = session)
       )
+    )
+  }
+
+  def streamExecute(query: String, bind: Map[String, _], tabletType: TabletType)(
+      observer: StreamObserver[Row])(implicit ctx: VitessCallerCtx, ec: ExecutionContext): Unit = {
+
+    import scala.collection.JavaConverters._
+
+    val se = new StreamObserver[StreamExecuteResponse] {
+      def onError(t: Throwable): Unit = {
+        observer.onError(t)
+      }
+      def onCompleted(): Unit = {
+        observer.onCompleted()
+      }
+      def onNext(value: StreamExecuteResponse): Unit = {
+        new Cursor(value.getResult).foreach(observer.onNext)
+      }
+    }
+
+    client.streamExecute(
+      StreamExecuteRequest(query = Some(Proto.bindQuery(query, bind)),
+                           callerId = ctx.callerId,
+                           tabletType = tabletType,
+                           keyspace = keyspace),
+      se
     )
   }
 
