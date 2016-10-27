@@ -13,7 +13,7 @@ import vtctlservice.vtctlservice.VtctlGrpc
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 
-class VtctldClient(channel: ManagedChannel, keyspace: String) extends BaseClient(channel, keyspace) {
+class VtctldClient(val channel: ManagedChannel, keyspace: String) extends ClientLifecycle {
 
   def this(host: String, port: Int, keyspace: String) = {
     this(NettyChannelBuilder

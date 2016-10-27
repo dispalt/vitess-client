@@ -21,7 +21,7 @@ import scala.reflect.ClassTag
 import scala.reflect.classTag
 import scala.util.{ DynamicVariable, Failure, Success, Try }
 
-class VitessContext[Naming <: NamingStrategy](client: Client, _ctx: VitessCallerCtx, tabletType: TabletType)
+class VitessContext[Naming <: NamingStrategy](client: ManagedClient, _ctx: VitessCallerCtx, tabletType: TabletType)
     extends SqlContext[VitessDialect, Naming]
     with VitessEncoder
     with VitessDecoder {
@@ -48,6 +48,7 @@ class VitessContext[Naming <: NamingStrategy](client: Client, _ctx: VitessCaller
   def close(): Unit = client.closeBlocking()
 
   // Not used yet.
+  // TODO: I don't think I need to the TxnEc stuff anymore here.
   def handleEx[T](r: RpcResponse)(f: Response => T)(implicit ctx: VitessCallerCtx, ec: ExecutionContext): Future[T] = {
     val p = Promise[T]()
     ec match {

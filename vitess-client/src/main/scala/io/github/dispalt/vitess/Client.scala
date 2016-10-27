@@ -8,7 +8,7 @@ import com.youtube.vitess.proto.topodata.TabletType
 import com.youtube.vitess.proto.vtgate._
 import com.youtube.vitess.proto.vtrpc.CallerID
 import io.github.dispalt.vitess.Response._
-import io.grpc.ManagedChannel
+import io.grpc.{ Channel, ClientInterceptor, ClientInterceptors, ManagedChannel }
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver
@@ -21,24 +21,31 @@ import vtctlservice.vtctlservice.VtctlGrpc
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success }
 
+class ManagedClient(val channel: ManagedChannel, val keyspace: String) extends Client with ClientLifecycle {}
+
+object ManagedClient {
+  def apply(host: String, port: Int, keyspace: String): ManagedClient = {
+    new ManagedClient(NettyChannelBuilder
+                        .forAddress(host, port)
+                        .nameResolverFactory(new DnsNameResolverProvider())
+                        .usePlaintext(true)
+                        .build,
+                      keyspace)
+  }
+}
+
+class InterceptedClient(val channel: Channel, val keyspace: String) extends Client
+
 /**
   * Handles Client operations, a mix of transaction, execute and streaming.
   *
-  * @param channel
-  * @param keyspace
   */
-class Client(channel: ManagedChannel, keyspace: String) extends BaseClient(channel, keyspace) {
+trait Client {
+
+  val channel: Channel
+  val keyspace: String
 
   val logger = LoggerFactory.getLogger(classOf[Client])
-
-  def this(host: String, port: Int, keyspace: String) = {
-    this(NettyChannelBuilder
-           .forAddress(host, port)
-           .nameResolverFactory(new DnsNameResolverProvider())
-           .usePlaintext(true)
-           .build,
-         keyspace)
-  }
 
   val client = VitessGrpc.stub(channel)
 
@@ -224,6 +231,11 @@ class Client(channel: ManagedChannel, keyspace: String) extends BaseClient(chann
     }
 
     run()
+  }
+
+  // ~~~~~~~~~~~~~~~~~~~~
+  def withInterceptors(interceptors: ClientInterceptor*): Client = {
+    new InterceptedClient(ClientInterceptors.intercept(channel, interceptors: _*), keyspace)
   }
 
 }
