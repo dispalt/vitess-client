@@ -3,20 +3,16 @@ package io.github.dispalt.vitess
 import java.util.concurrent.TimeUnit
 
 import com.youtube.vitess.proto.grpc.vtgateservice.VitessGrpc
+import com.youtube.vitess.proto.grpc.vtgateservice.VitessGrpc.VitessStub
 import com.youtube.vitess.proto.query.BoundQuery
 import com.youtube.vitess.proto.topodata.TabletType
 import com.youtube.vitess.proto.vtgate._
-import com.youtube.vitess.proto.vtrpc.CallerID
 import io.github.dispalt.vitess.Response._
-import io.grpc.{ Channel, ClientInterceptor, ClientInterceptors, ManagedChannel }
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver
+import io.grpc.{ Channel, ClientInterceptor, ManagedChannel }
 import org.slf4j.LoggerFactory
-import tabletmanagerdata.tabletmanagerdata.{ ApplySchemaRequest, ApplySchemaResponse }
-import tabletmanagerservice.tabletmanagerservice.TabletManagerGrpc
-import vtctldata.vtctldata.ExecuteVtctlCommandRequest
-import vtctlservice.vtctlservice.VtctlGrpc
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.{ Failure, Success }
@@ -34,7 +30,11 @@ object ManagedClient {
   }
 }
 
-class InterceptedClient(val channel: Channel, val keyspace: String) extends Client
+class InterceptedClient(val channel: Channel, val keyspace: String, interceptors: ClientInterceptor*) extends Client {
+  override def client(implicit ctx: VitessCallerCtx): VitessStub = {
+    super.client.withInterceptors(interceptors: _*)
+  }
+}
 
 /**
   * Handles Client operations, a mix of transaction, execute and streaming.
@@ -47,7 +47,11 @@ trait Client {
 
   val logger = LoggerFactory.getLogger(classOf[Client])
 
-  val client = VitessGrpc.stub(channel)
+  private val stub = VitessGrpc.stub(channel)
+
+  def client(implicit ctx: VitessCallerCtx): VitessStub = {
+    stub.withDeadlineAfter(ctx.timeoutMs, TimeUnit.MILLISECONDS)
+  }
 
   // ~~~~~~~~~~~~~~~~~~~~~
   // Low Level stuff
@@ -108,8 +112,6 @@ trait Client {
     */
   def streamExecute(query: String, bind: Map[String, _], tabletType: TabletType)(
       observer: StreamObserver[Row])(implicit ctx: VitessCallerCtx, ec: ExecutionContext): Unit = {
-
-    import scala.collection.JavaConverters._
     var fieldMap: FieldMap = null
 
     val se = new StreamObserver[StreamExecuteResponse] {
@@ -232,10 +234,4 @@ trait Client {
 
     run()
   }
-
-  // ~~~~~~~~~~~~~~~~~~~~
-  def withInterceptors(interceptors: ClientInterceptor*): Client = {
-    new InterceptedClient(ClientInterceptors.intercept(channel, interceptors: _*), keyspace)
-  }
-
 }
