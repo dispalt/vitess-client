@@ -9,7 +9,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 import scala.language.{ implicitConversions, postfixOps }
 import scala.util.{ Failure, Success }
 
-case class FieldMap(fields: Vector[Field]) {
+case class FieldMap(fields: Seq[Field]) {
   private val _fieldIdx: Map[String, Int] = fields.zipWithIndex.map {
     case (f, idx) => f.name.toLowerCase() -> idx
   }(collection.breakOut)
@@ -31,7 +31,7 @@ case class FieldMap(fields: Vector[Field]) {
   }
 }
 
-class Row(fields: FieldMap, values: Vector[ByteString]) {
+class Row(fields: FieldMap, values: Seq[ByteString]) {
   def getObj(name: String): Option[Any] = {
     fields.getT(name).map {
       case (f, idx) => Row.convertFieldValue(f, values(idx))
@@ -59,7 +59,7 @@ object Row {
         val s = bs.substring(start, start + l.toInt)
         start += l.toInt
         s
-    } toVector
+    }
 
     new Row(fields, values = values)
   }
@@ -100,22 +100,6 @@ object Row {
   }
 }
 
-class Cursor(qr: QueryResult) extends Iterator[Row] {
-  private val it                 = qr.rows.iterator
-  private val fieldMap: FieldMap = FieldMap(qr.fields.toVector)
-
-  def rowsAffected = qr.rowsAffected
-
-  def hasNext: Boolean = it.hasNext
-
-  def next(): Row = {
-    if (hasNext)
-      Row(fieldMap, it.next())
-    else
-      null
-  }
-}
-
 case class Response(value: Cursor, session: Option[Session])
 case class FailedResponse(rpcError: RPCError, session: Option[Session])
     extends Throwable(
@@ -128,10 +112,28 @@ object Response {
 
   type RpcResponse = Future[FailedResponse Either Response]
 
-  def handleResponse(er: Future[ExecuteResponse])(implicit ec: ExecutionContext): RpcResponse = {
+  /**
+    * This function serves the threading of the transactions.  This is really only valid for ER for now.
+    * It also handles taking success/error messages and putting them in the right spot.
+    *
+    * @param er The raw GRPC response
+    * @param ec the Execution context, which is most likely a TxnEC
+    * @return
+    */
+  def handleExecutionResponse(er: Future[ExecuteResponse])(implicit ec: ExecutionContext): RpcResponse = {
+
+    val transactionalExecutionContext = ec match {
+      case tec: TransactionalExecutionContext => Some(tec)
+      case _                                  => None
+    }
+
     er.map {
-      case ExecuteResponse(Some(err), session, _)   => Left(FailedResponse(err, session))
-      case ExecuteResponse(None, session, Some(qr)) => Right(Response(new Cursor(qr), session))
+      case ExecuteResponse(Some(err), session, _) =>
+        transactionalExecutionContext.foreach(_.session = session)
+        Left(FailedResponse(err, session))
+      case ExecuteResponse(None, session, Some(qr)) =>
+        transactionalExecutionContext.foreach(_.session = session)
+        Right(Response(new Cursor(qr), session))
     }
   }
 

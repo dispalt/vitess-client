@@ -108,27 +108,8 @@ class VitessContext[Naming <: NamingStrategy](client: Client, _ctx: VitessCaller
   }
 
   def transaction[T](f: TransactionalExecutionContext => Future[T])(implicit ctx: VitessCallerCtx,
-                                                                    ec: ExecutionContext) = {
-    val p = Promise[T]()
-    client.begin() onComplete {
-      case Success(session) =>
-        implicit val tec = new TransactionalExecutionContext(ec, session)
-        f(tec).onComplete {
-          case Success(res) =>
-            p.completeWith(client.commit().map(_ => res))
-          case Failure(fail @ FailedResponse(rpcError, session)) =>
-            client.rollback() onComplete { _ =>
-              p.failure(fail)
-            }
-          case Failure(fail) =>
-            logger.error("Unknown failure occurred during execution of transaction", fail)
-            p failure fail
-        }
-      case Failure(fail) =>
-        logger.warn("begin call failed")
-        p failure fail
-    }
-    p.future
+                                                                    ec: ExecutionContext): Future[T] = {
+    client.transaction(f)
   }
 
   def executeBatchAction(groups: List[BatchGroup])(implicit ec: ExecutionContext,
