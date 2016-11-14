@@ -1,5 +1,7 @@
 # Vitess Client for Scala
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.dispalt/vitess-client/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/com.dispalt/vitess-client)
+
 
 This is an implementation of the [Vitess](http://vitess.io) grpc interface using a full scala toolchain.
 The reason for this is three-fold.  
