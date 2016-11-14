@@ -23,7 +23,7 @@ object Build extends AutoPlugin {
     Vector(
       // Core settings
       organization := "com.dispalt",
-      crossScalaVersions := Seq(scalaVersion.value, "2.12.0"),
+      crossScalaVersions := Seq(scalaVersion.value), // Add 2.12 when quill upgrades
       licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
       homepage := Some(url("https://github.com/dispalt/vitess-client")),
       description := "Vitess client including quill bindings.",
