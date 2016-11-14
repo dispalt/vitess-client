@@ -13,7 +13,7 @@ lazy val `vitess-client` =
   project
     .in(file("vitess-client"))
     .settings(PB.targets in Compile := Seq(
-                scalapb.gen() -> (sourceManaged in Compile).value
+                scalapb.gen(singleLineToString = true) -> (sourceManaged in Compile).value
               ),
               libraryDependencies ++= Library.Client.dependenciesToShade ++ Library.Client.nonShadedDependencies,
               Build.publishSettings)

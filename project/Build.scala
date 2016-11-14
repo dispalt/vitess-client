@@ -22,7 +22,8 @@ object Build extends AutoPlugin {
   override def projectSettings =
     Vector(
       // Core settings
-      organization := "io.github.dispalt",
+      organization := "com.dispalt",
+      crossScalaVersions := Seq(scalaVersion.value, "2.12.0"),
       licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
       homepage := Some(url("https://github.com/dispalt/vitess-client")),
       description := "Vitess client including quill bindings.",

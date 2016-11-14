@@ -1,4 +1,4 @@
-package io.github.dispalt.vitess.quill
+package com.dispalt.vitess.quill
 
 import java.util.Date
 
