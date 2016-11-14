@@ -1,13 +1,35 @@
 # Vitess Client for Scala
 
-This is an implementation of the [vitess](http://vitess.io) grpc interface using a full scala toolchain.
+
+This is an implementation of the [Vitess](http://vitess.io) grpc interface using a full scala toolchain.
 The reason for this is three-fold.  
 
-* Using scalapb gives a more scala-like interface.
-* There are two clients one is shaded the other is not.  Between 4.0 netty and 4.1 netty there are multiple binary
-incompatibilities which makes it hard to integrate two different dependency trees
-* I can build a quill adaptor for vitess, which is a great abstraction using the power of macros.
+* Using [ScalaPB](https://github.com/trueaccord/ScalaPB) gives a more scala-like interface.
+* Netty 4.1 incompatibility. There are two clients one is shaded the other is not. Netty 4.0 to 4.1 introduced
+multiple binary incompatibilities which makes it hard to integrate two different dependency trees
+* I can build a [Quill](https://github.com/getquill/quill/) adapter for [Vitess](http://vitess.io), 
+which is a great lightweight compile-time SQL abstraction.
+
+## Quick start
+
+### SBT
+
+In your `build.sbt` include the build coordinates hosted on maven like so.
+
+```scala
+libraryDependencies ++= Seq(
+    "com.dispalt" %% "vitess-client" % "0.2.0"
+)
+```
+
+Or to use the shaded version instead, include the following artifact.
+
+```scala
+libraryDependencies ++= Seq(
+    "com.dispalt" %% "vitess-shade" % "0.2.0"
+)
+```
 
 # License
 
-Apache 2.0
+Apache 2.0, see the LICENSE file for a full copy.
