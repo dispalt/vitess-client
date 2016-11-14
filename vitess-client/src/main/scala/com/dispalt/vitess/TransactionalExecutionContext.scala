@@ -1,4 +1,4 @@
-package io.github.dispalt.vitess
+package com.dispalt.vitess
 
 import com.trueaccord.scalapb.TextFormat
 import com.youtube.vitess.proto.vtgate.Session

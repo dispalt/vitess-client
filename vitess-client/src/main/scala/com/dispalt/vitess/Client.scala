@@ -1,4 +1,4 @@
-package io.github.dispalt.vitess
+package com.dispalt.vitess
 
 import java.util.concurrent.TimeUnit
 
@@ -7,7 +7,7 @@ import com.youtube.vitess.proto.grpc.vtgateservice.VitessGrpc.VitessStub
 import com.youtube.vitess.proto.query.BoundQuery
 import com.youtube.vitess.proto.topodata.TabletType
 import com.youtube.vitess.proto.vtgate._
-import io.github.dispalt.vitess.Response._
+import com.dispalt.vitess.Response._
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver

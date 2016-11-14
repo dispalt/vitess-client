@@ -1,4 +1,4 @@
-package io.github.dispalt.vitess
+package com.dispalt.vitess
 
 import com.google.common.primitives.UnsignedLong
 import com.google.protobuf.ByteString

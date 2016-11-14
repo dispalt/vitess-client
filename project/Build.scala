@@ -83,7 +83,7 @@ object Build extends AutoPlugin {
           <developer>
             <id>dispalt</id>
             <name>Dan Di Spaltro</name>
-            <organizationUrl>http://github.com/dispalt</organizationUrl>
+            <organizationUrl>http://dispalt.com</organizationUrl>
           </developer>
         </developers>
     )

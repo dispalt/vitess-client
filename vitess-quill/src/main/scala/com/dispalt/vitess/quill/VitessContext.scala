@@ -1,9 +1,10 @@
 package com.dispalt.vitess.quill
 
 import java.util.Date
+import java.time.LocalDate
 
-import io.github.dispalt.vitess.Response.RpcResponse
-import io.github.dispalt.vitess._
+import com.dispalt.vitess.Response.RpcResponse
+import com.dispalt.vitess._
 import com.google.common.primitives.UnsignedLong
 import com.typesafe.scalalogging.Logger
 import com.youtube.vitess.proto.query.{ BindVariable, BoundQuery }
@@ -12,7 +13,7 @@ import io.getquill.{ MySQLDialect, NamingStrategy }
 import io.getquill.context.sql.SqlContext
 import io.getquill.idiom.{ Idiom => BaseIdiom }
 import io.getquill.idiom.Idiom
-import io.github.dispalt.vitess.Client
+import com.dispalt.vitess.Client
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
@@ -154,6 +155,7 @@ trait VitessEncoder { this: VitessContext[_] =>
   implicit val doubleEncoder: Encoder[Double]         = encoder
   implicit val byteArrayEncoder: Encoder[Array[Byte]] = encoder
   implicit val dateEncoder: Encoder[Date]             = encoder
+  implicit val localDateEncoder: Encoder[LocalDate]   = encoder
 }
 
 trait VitessDecoder { this: VitessContext[_] =>
@@ -199,5 +201,6 @@ trait VitessDecoder { this: VitessContext[_] =>
   implicit val doubleDecoder: Decoder[Double]         = decoder
   implicit val byteArrayDecoder: Decoder[Array[Byte]] = decoder
   implicit val dateDecoder: Decoder[Date]             = decoder
+  implicit val localDateDecoder: Decoder[LocalDate]   = decoder
 
 }

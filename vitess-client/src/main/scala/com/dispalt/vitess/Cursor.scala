@@ -1,4 +1,4 @@
-package io.github.dispalt.vitess
+package com.dispalt.vitess
 
 import com.youtube.vitess.proto.query.QueryResult
 

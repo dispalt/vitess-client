@@ -1,4 +1,4 @@
-package io.github.dispalt.vitess
+package com.dispalt.vitess
 
 import com.google.protobuf.ByteString
 import com.youtube.vitess.proto.query.{ Field, QueryResult, Row => RRow }
