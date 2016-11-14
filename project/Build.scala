@@ -29,7 +29,6 @@ object Build extends AutoPlugin {
       description := "Vitess client including quill bindings.",
       mappings.in(Compile, packageBin) += baseDirectory.in(ThisBuild).value / "LICENSE" -> "LICENSE",
       scalaVersion := Version.Scala,
-      crossScalaVersions := Vector(scalaVersion.value),
       scalacOptions ++= Vector(
         "-unchecked",
         "-deprecation",
