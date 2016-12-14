@@ -9,7 +9,7 @@ object Version {
   final val Quill     = "1.0.0"
   final val Scala     = "2.11.8"
   final val ScalaLog  = "3.5.0"
-  final val ScalaPB   = "0.5.44"
+  final val ScalaPB   = "0.5.45"
   final val ScalaTest = "3.0.0"
   final val Slf4j     = "1.7.21"
 }
@@ -17,13 +17,13 @@ object Version {
 object Library {
   val scalaTest = "org.scalatest" %% "scalatest" % Version.ScalaTest
 
-  val grpc        = "io.grpc"                % "grpc-netty"            % Version.GrpcNetty
-  val scalaPb     = "com.trueaccord.scalapb" %% "scalapb-runtime-grpc" % Version.ScalaPB
   val `quill-sql` = "io.getquill"            %% "quill-sql"            % Version.Quill
-  val slf4j       = "org.slf4j"              % "slf4j-api"             % Version.Slf4j
-  val netty       = "io.netty"               % "netty-codec-http2"     % Version.Netty
+  val grpc        = "io.grpc"                % "grpc-netty"            % Version.GrpcNetty
   val guava       = "com.google.guava"       % "guava"                 % Version.Guava
   val lenses      = "com.trueaccord.lenses"  %% "lenses"               % Version.Lenses
+  val netty       = "io.netty"               % "netty-codec-http2"     % Version.Netty
+  val scalaPb     = "com.trueaccord.scalapb" %% "scalapb-runtime-grpc" % Version.ScalaPB
+  val slf4j       = "org.slf4j"              % "slf4j-api"             % Version.Slf4j
 
   //////////////////
   object Client {

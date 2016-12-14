@@ -100,11 +100,10 @@ object Build extends AutoPlugin {
       val pattern = """"com.dispalt" %% "vitess-.*" % "(.*)"""".r
 
       val fileName = "README.md"
-      val content = Source.fromFile(fileName).getLines.mkString("\n")
+      val content  = Source.fromFile(fileName).getLines.mkString("\n")
 
       val newContent =
-        pattern.replaceAllIn(content,
-          m => m.matched.replaceAllLiterally(m.subgroups.head, newVersion))
+        pattern.replaceAllIn(content, m => m.matched.replaceAllLiterally(m.subgroups.head, newVersion))
 
       new PrintWriter(fileName) { write(newContent); close }
 
@@ -124,11 +123,11 @@ object Build extends AutoPlugin {
       updateReadmeVersion(_._1),
       commitReleaseVersion,
       tagRelease,
-      ReleaseStep(action = Command.process("publishSigned", _)),
+      ReleaseStep(action = Command.process("publishSigned", _), enableCrossBuild = true),
       setNextVersion,
       updateReadmeVersion(_._2),
       commitNextVersion,
-      ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+      ReleaseStep(action = Command.process("sonatypeReleaseAll", _), enableCrossBuild = true),
       pushChanges
     )
   )
