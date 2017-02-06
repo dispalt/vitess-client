@@ -22,7 +22,7 @@ In your `build.sbt` include the build coordinates hosted on maven like so.
 
 ```scala
 libraryDependencies ++= Seq(
-    "com.dispalt" %% "vitess-client" % "0.2.0"
+  "com.dispalt" %% "vitess-client" % "0.4.3"
 )
 ```
 
@@ -30,7 +30,7 @@ Or to use the shaded version instead, include the following artifact.
 
 ```scala
 libraryDependencies ++= Seq(
-    "com.dispalt" %% "vitess-shade" % "0.2.0"
+  "com.dispalt" %% "vitess-shade" % "0.4.3"
 )
 ```
 
@@ -41,11 +41,11 @@ so if you want to use the shaded version, exclude the dependency and
 
 ```scala
 libraryDependencies ++= Seq(
-    "com.dispalt" %% "vitess-quill" % "0.2.0"
+  "com.dispalt" %% "vitess-quill" % "0.4.3"
 )
 ```
 
-The current version `0.4.0` supports [Quill](getquill.io) `1.1.0`
+The current version `0.4.3` supports [Quill](getquill.io) `1.1.0`
 
 # License
 
