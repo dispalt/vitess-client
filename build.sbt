@@ -12,6 +12,7 @@ lazy val `vitess` =
 lazy val `vitess-client` =
   project
     .in(file("vitess-client"))
+    .enablePlugins(AutomateHeaderPlugin)
     .settings(
       PB.targets in Compile := Seq(
         scalapb.gen(singleLineToString = true) -> (sourceManaged in Compile).value
@@ -23,6 +24,7 @@ lazy val `vitess-client` =
 lazy val `vitess-shade` =
   project
     .in(file("vitess-shade"))
+    .enablePlugins(AutomateHeaderPlugin)
     .settings(
       // Just get whatever asset is built in vitess-client
       exportedProducts in Compile := (exportedProducts in Compile in `vitess-client`).value,
@@ -65,6 +67,7 @@ lazy val `vitess-shade` =
 lazy val `vitess-quill` =
   project
     .in(file("vitess-quill"))
+    .enablePlugins(AutomateHeaderPlugin)
     .settings(
       libraryDependencies ++= Seq(
         Library.`quill-sql`
@@ -124,6 +127,7 @@ def publishSettings =
   )
 
 def releaseSettings = publishSettings ++ Seq(
+  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   releaseProcess := Seq[ReleaseStep](
     checkSnapshotDependencies,
     inquireVersions,
