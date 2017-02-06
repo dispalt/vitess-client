@@ -84,49 +84,7 @@ object Build extends AutoPlugin {
         </developers>
     )
 
-  // Borrowed from the awesome people at https://github.com/getquill/quill/blob/master/build.sbt
-  def updateReadmeVersion(selectVersion: sbtrelease.Versions => String) =
-    ReleaseStep(action = st => {
 
-      val newVersion = selectVersion(st.get(ReleaseKeys.versions).get)
-
-      import scala.io.Source
-      import java.io.PrintWriter
-
-      val pattern = """"com.dispalt" %% "vitess-.*" % "(.*)"""".r
-
-      val fileName = "README.md"
-      val content  = Source.fromFile(fileName).getLines.mkString("\n")
-
-      val newContent =
-        pattern.replaceAllIn(content, m => m.matched.replaceAllLiterally(m.subgroups.head, newVersion))
-
-      new PrintWriter(fileName) { write(newContent); close }
-
-      val vcs = Project.extract(st).get(releaseVcs).get
-      vcs.add(fileName).!
-
-      st
-    })
-
-  def releaseSettings = publishSettings ++ Seq(
-    releaseProcess := Seq[ReleaseStep](
-      checkSnapshotDependencies,
-      inquireVersions,
-      runClean,
-      runTest,
-      setReleaseVersion,
-      updateReadmeVersion(_._1),
-      commitReleaseVersion,
-      tagRelease,
-      ReleaseStep(action = Command.process("publishSigned", _), enableCrossBuild = true),
-      setNextVersion,
-      updateReadmeVersion(_._2),
-      commitNextVersion,
-      ReleaseStep(action = Command.process("sonatypeReleaseAll", _), enableCrossBuild = true),
-      pushChanges
-    )
-  )
 
   def preventPublication =
     Seq(publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
