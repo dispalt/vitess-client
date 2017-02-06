@@ -16,7 +16,7 @@ lazy val `vitess-client` =
                 scalapb.gen(singleLineToString = true) -> (sourceManaged in Compile).value
               ),
               libraryDependencies ++= Library.Client.dependenciesToShade ++ Library.Client.nonShadedDependencies,
-              Build.publishSettings)
+              Build.releaseSettings)
 
 lazy val `vitess-shade` =
   project
@@ -57,7 +57,7 @@ lazy val `vitess-shade` =
         }
       },
       addArtifact(artifact in Compile, assembly),
-      Build.publishSettings
+      Build.releaseSettings
     )
 
 lazy val `vitess-quill` =
