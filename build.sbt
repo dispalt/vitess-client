@@ -2,50 +2,6 @@ import ReleaseTransformations._
 
 scalaVersion := Version.Scala
 
-// Borrowed from the awesome people at https://github.com/getquill/quill/blob/master/build.sbt
-def updateReadmeVersion(selectVersion: sbtrelease.Versions => String) =
-  ReleaseStep(action = st => {
-
-    val newVersion = selectVersion(st.get(ReleaseKeys.versions).get)
-
-    import scala.io.Source
-    import java.io.PrintWriter
-
-    val pattern = """"com.dispalt" %% "vitess-.*" % "(.*)"""".r
-
-    val fileName = "README.md"
-    val content  = Source.fromFile(fileName).getLines.mkString("\n")
-
-    val newContent =
-      pattern.replaceAllIn(content, m => m.matched.replaceAllLiterally(m.subgroups.head, newVersion))
-
-    new PrintWriter(fileName) { write(newContent); close }
-
-    val vcs = Project.extract(st).get(releaseVcs).get
-    vcs.add(fileName).!
-
-    st
-  })
-
-def releaseSettings = Build.publishSettings ++ Seq(
-  releaseProcess := Seq[ReleaseStep](
-    checkSnapshotDependencies,
-    inquireVersions,
-    runClean,
-    runTest,
-    setReleaseVersion,
-    updateReadmeVersion(_._1),
-    commitReleaseVersion,
-    tagRelease,
-    ReleaseStep(action = Command.process("publishSigned", _), enableCrossBuild = true),
-    setNextVersion,
-    updateReadmeVersion(_._2),
-    commitNextVersion,
-    ReleaseStep(action = Command.process("sonatypeReleaseAll", _), enableCrossBuild = true),
-    pushChanges
-  )
-)
-
 lazy val `vitess` =
   project
     .in(file("."))
@@ -56,11 +12,13 @@ lazy val `vitess` =
 lazy val `vitess-client` =
   project
     .in(file("vitess-client"))
-    .settings(PB.targets in Compile := Seq(
-                scalapb.gen(singleLineToString = true) -> (sourceManaged in Compile).value
-              ),
-              libraryDependencies ++= Library.Client.dependenciesToShade ++ Library.Client.nonShadedDependencies,
-              releaseSettings)
+    .settings(
+      PB.targets in Compile := Seq(
+        scalapb.gen(singleLineToString = true) -> (sourceManaged in Compile).value
+      ),
+      libraryDependencies ++= Library.Client.dependenciesToShade ++ Library.Client.nonShadedDependencies,
+      releaseSettings
+    )
 
 lazy val `vitess-shade` =
   project
@@ -114,3 +72,72 @@ lazy val `vitess-quill` =
       unmanagedJars in Compile := Seq((assembly in (`vitess-shade`, assembly)).value).classpath,
       releaseSettings
     )
+
+
+// Borrowed from the awesome people at https://github.com/getquill/quill/blob/master/build.sbt
+def updateReadmeVersion(selectVersion: sbtrelease.Versions => String) =
+  ReleaseStep(action = st => {
+
+    val newVersion = selectVersion(st.get(ReleaseKeys.versions).get)
+
+    import scala.io.Source
+    import java.io.PrintWriter
+
+    val pattern = """"com.dispalt" %% "vitess-.*" % "(.*)"""".r
+
+    val fileName = "README.md"
+    val content  = Source.fromFile(fileName).getLines.mkString("\n")
+
+    val newContent =
+      pattern.replaceAllIn(content, m => m.matched.replaceAllLiterally(m.subgroups.head, newVersion))
+
+    new PrintWriter(fileName) { write(newContent); close }
+
+    val vcs = Project.extract(st).get(releaseVcs).get
+    vcs.add(fileName).!
+
+    st
+  })
+
+def publishSettings =
+  Seq(
+    publishTo := {
+      val nexus = "https://oss.sonatype.org/"
+      if (isSnapshot.value)
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+      else
+        Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    },
+    pomExtra :=
+      <scm>
+        <connection>scm:git:https://github.com/dispalt/vitess-client.git</connection>
+        <developerConnection>scm:git:git@github.com:dispalt/vitess-client.git</developerConnection>
+        <url>http://github.com/dispalt/vitess-client/tree/master</url>
+      </scm>
+        <developers>
+          <developer>
+            <id>dispalt</id>
+            <name>Dan Di Spaltro</name>
+            <organizationUrl>http://dispalt.com</organizationUrl>
+          </developer>
+        </developers>
+  )
+
+def releaseSettings = publishSettings ++ Seq(
+  releaseProcess := Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    runClean,
+    runTest,
+    setReleaseVersion,
+    updateReadmeVersion(_._1),
+    commitReleaseVersion,
+    tagRelease,
+    ReleaseStep(action = Command.process("publishSigned", _)),
+    setNextVersion,
+    updateReadmeVersion(_._2),
+    commitNextVersion,
+    ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+    pushChanges
+  )
+)

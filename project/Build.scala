@@ -60,32 +60,6 @@ object Build extends AutoPlugin {
     }
   )
 
-  def publishSettings =
-    Seq(
-      publishTo := {
-        val nexus = "https://oss.sonatype.org/"
-        if (isSnapshot.value)
-          Some("snapshots" at nexus + "content/repositories/snapshots")
-        else
-          Some("releases" at nexus + "service/local/staging/deploy/maven2")
-      },
-      pomExtra :=
-        <scm>
-          <connection>scm:git:https://github.com/dispalt/vitess-client.git</connection>
-          <developerConnection>scm:git:git@github.com:dispalt/vitess-client.git</developerConnection>
-          <url>http://github.com/dispalt/vitess-client/tree/master</url>
-        </scm>
-        <developers>
-          <developer>
-            <id>dispalt</id>
-            <name>Dan Di Spaltro</name>
-            <organizationUrl>http://dispalt.com</organizationUrl>
-          </developer>
-        </developers>
-    )
-
-
-
   def preventPublication =
     Seq(publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
         publishArtifact := false,
