@@ -12,6 +12,7 @@ object Version {
   final val ScalaPB   = "0.5.47"
   final val ScalaTest = "3.0.0"
   final val Slf4j     = "1.7.21"
+  final val Si2712fix = "1.2.0"
 }
 
 object Library {

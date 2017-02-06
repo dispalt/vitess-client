@@ -1,6 +1,7 @@
 package com.dispalt.vitess.quill
 
-import java.util.Date
+import java.nio.ByteBuffer
+import java.util.{ Date, UUID }
 import java.time.LocalDate
 
 import com.dispalt.vitess.Response.RpcResponse
@@ -116,17 +117,19 @@ class VitessContext[Naming <: NamingStrategy](client: ManagedClient, _ctx: Vites
 
   def executeBatchAction(groups: List[BatchGroup])(implicit ec: ExecutionContext,
                                                    ctx: VitessCallerCtx): Future[List[Long]] =
-    Future.sequence {
-      groups.map {
-        case BatchGroup(sql, prepare) =>
-          prepare.foldLeft(Future.successful(List.empty[Long])) {
-            case (acc, prepare) =>
-              acc.flatMap { list =>
-                executeAction(sql, prepare).map(list :+ _)
-              }
-          }
+    Future
+      .sequence {
+        groups.map {
+          case BatchGroup(sql, prepare) =>
+            prepare.foldLeft(Future.successful(List.empty[Long])) {
+              case (acc, prepare) =>
+                acc.flatMap { list =>
+                  executeAction(sql, prepare).map(list :+ _)
+                }
+            }
+        }
       }
-    }.map(_.flatten.toList)
+      .map(_.flatten.toList)
 
   private def withClient[T](f: Client => T) =
     f(client)
@@ -135,56 +138,92 @@ class VitessContext[Naming <: NamingStrategy](client: ManagedClient, _ctx: Vites
 
 trait VitessEncoder { this: VitessContext[_] =>
 
+  type Encoder[T] = VEncoder[T]
+
+  case class VEncoder[T](encoder: BaseEncoder[T]) extends BaseEncoder[T] {
+    override def apply(index: Index, value: T, row: PrepareRow) =
+      encoder(index, value, row)
+  }
+
+  def encoder[T](e: BaseEncoder[T]): Encoder[T] = VEncoder(e)
+
   def encoder[T: ClassTag]: Encoder[T] =
-    new Encoder[T] {
-      def apply(index: Int, value: T, row: BoundQuery) = {
-        row.addBindVariables(s"v$index" -> Proto.buildBindVariable(value))
-      }
+    VEncoder[T]((index, value, row) => row.addBindVariables(s"v$index" -> Proto.buildBindVariable(value)))
+
+  // TODO: Probably a better way to do this.
+  private[this] val nullEncoder: Encoder[Null] =
+    encoder((index, value, row) => row.addBindVariables(s"v$index" -> Proto.buildBindVariable(value)))
+
+  implicit def mappedEncoder[I, O](implicit mapped: MappedEncoding[I, O], encoder: Encoder[O]): Encoder[I] =
+    VEncoder(mappedBaseEncoder(mapped, encoder.encoder))
+
+  implicit def optionEncoder[T](implicit d: Encoder[T]): Encoder[Option[T]] = encoder { (index, value, row) =>
+    value match {
+      case Some(v) => d(index, v, row)
+      case None    => nullEncoder(index, null, row)
     }
+  }
 
-  implicit def optionEncoder[T](implicit d: Encoder[T]): Encoder[Option[T]] = ???
-
-  implicit val stringEncoder: Encoder[String]         = encoder
-  implicit val bigDecimalEncoder: Encoder[BigDecimal] = encoder
-  implicit val booleanEncoder: Encoder[Boolean]       = encoder
-  implicit val byteEncoder: Encoder[Byte]             = encoder
-  implicit val shortEncoder: Encoder[Short]           = encoder
-  implicit val intEncoder: Encoder[Int]               = encoder
-  implicit val longEncoder: Encoder[Long]             = encoder
-  implicit val floatEncoder: Encoder[Float]           = encoder
-  implicit val doubleEncoder: Encoder[Double]         = encoder
-  implicit val byteArrayEncoder: Encoder[Array[Byte]] = encoder
-  implicit val dateEncoder: Encoder[Date]             = encoder
-  implicit val localDateEncoder: Encoder[LocalDate]   = encoder
+  implicit val stringEncoder: Encoder[String]         = encoder[String]
+  implicit val bigDecimalEncoder: Encoder[BigDecimal] = encoder[BigDecimal]
+  implicit val booleanEncoder: Encoder[Boolean]       = encoder[Boolean]
+  implicit val byteEncoder: Encoder[Byte]             = encoder[Byte]
+  implicit val shortEncoder: Encoder[Short]           = encoder[Short]
+  implicit val intEncoder: Encoder[Int]               = encoder[Int]
+  implicit val longEncoder: Encoder[Long]             = encoder[Long]
+  implicit val floatEncoder: Encoder[Float]           = encoder[Float]
+  implicit val doubleEncoder: Encoder[Double]         = encoder[Double]
+  implicit val byteArrayEncoder: Encoder[Array[Byte]] = encoder[Array[Byte]]
+  implicit val dateEncoder: Encoder[Date]             = encoder[Date]
+  implicit val localDateEncoder: Encoder[LocalDate]   = encoder[LocalDate]
+  implicit val uuidEncoder: Encoder[UUID]             = encoder[UUID]
 }
 
 trait VitessDecoder { this: VitessContext[_] =>
 
   import io.getquill.util.Messages._
-  def decoder[T] = new Decoder[T] {
-    def apply(index: Int, row: ResultRow): T = {
-      row.get[T](index)
-    }
+  type Decoder[T] = VDecoder[T]
+
+  case class VDecoder[T](decoder: BaseDecoder[T]) extends BaseDecoder[T] {
+    override def apply(index: Index, row: ResultRow) =
+      decoder(index, row)
   }
 
-  def typedDecoder[T: ClassTag](f: PartialFunction[Any, T]): Decoder[T] =
-    new Decoder[T] {
-      def apply(index: Int, row: ResultRow) = {
-        val value = row.getAny(index)
-        f.lift(value).getOrElse(fail(s"Value '$value' can't be decoded to '${classTag[T].runtimeClass}'"))
+  def decoder[T](d: BaseDecoder[T]): Decoder[T] = VDecoder(
+    (index, row) => {
+      row.get[T](index) match {
+        case null => fail(s"Expected column at index $index to be defined but is was empty")
+        case _    => d(index, row)
       }
     }
+  )
 
-  implicit def optionDecoder[T](implicit d: Decoder[T]): Decoder[Option[T]] = new Decoder[Option[T]] {
-    def apply(index: Int, row: ResultRow): Option[T] = {
-      Option(d(index, row))
+  def decoder[T]: Decoder[T] = VDecoder(
+    (index, row) => {
+      row.get[T](index) match {
+        case null => fail(s"Expected column at index $index to be defined but is was empty")
+        case f    => f
+      }
     }
-  }
+  )
+
+  def typedDecoder[T: ClassTag](f: PartialFunction[Any, T]): Decoder[T] =
+    VDecoder { (index: Index, row: ResultRow) =>
+      val value = row.getAny(index)
+      f.lift(value).getOrElse(fail(s"Value '$value' can't be decoded to '${classTag[T].runtimeClass}'"))
+    }
+
+  implicit def optionDecoder[T](implicit d: Decoder[T]): Decoder[Option[T]] =
+    VDecoder((index, row) => {
+      Option(row.get[T](index))
+    })
+
+  implicit def mappedDecoder[I, O](implicit mapped: MappedEncoding[I, O], decoder: Decoder[I]): Decoder[O] =
+    VDecoder(mappedBaseDecoder(mapped, decoder.decoder))
 
   implicit val stringDecoder: Decoder[String] = typedDecoder[String] {
-    case a: Array[Byte] => new String(a)
+    case a: Array[Byte @unchecked] => new String(a)
   }
-
   implicit val bigDecimalDecoder: Decoder[BigDecimal] = decoder[BigDecimal]
   implicit val booleanDecoder: Decoder[Boolean] = typedDecoder[Boolean] {
     case i: Integer                => i == 1
@@ -193,14 +232,21 @@ trait VitessDecoder { this: VitessContext[_] =>
     case i: Array[Byte @unchecked] => i(0) == 1
   }
 
-  implicit val byteDecoder: Decoder[Byte]             = decoder
-  implicit val shortDecoder: Decoder[Short]           = decoder
-  implicit val intDecoder: Decoder[Int]               = decoder
-  implicit val longDecoder: Decoder[Long]             = decoder
-  implicit val floatDecoder: Decoder[Float]           = decoder
-  implicit val doubleDecoder: Decoder[Double]         = decoder
-  implicit val byteArrayDecoder: Decoder[Array[Byte]] = decoder
-  implicit val dateDecoder: Decoder[Date]             = decoder
-  implicit val localDateDecoder: Decoder[LocalDate]   = decoder
-
+  implicit val byteDecoder: Decoder[Byte]             = decoder[Byte]
+  implicit val shortDecoder: Decoder[Short]           = decoder[Short]
+  implicit val intDecoder: Decoder[Int]               = decoder[Int]
+  implicit val longDecoder: Decoder[Long]             = decoder[Long]
+  implicit val floatDecoder: Decoder[Float]           = decoder[Float]
+  implicit val doubleDecoder: Decoder[Double]         = decoder[Double]
+  implicit val byteArrayDecoder: Decoder[Array[Byte]] = decoder[Array[Byte]]
+  implicit val dateDecoder: Decoder[Date]             = decoder[Date]
+  implicit val localDateDecoder: Decoder[LocalDate]   = decoder[LocalDate]
+  implicit val uuidDecoder: Decoder[UUID] = VDecoder[UUID](
+    (index, row) => {
+      val bb   = ByteBuffer.wrap(row.getAny(index).asInstanceOf[Array[Byte]])
+      val high = bb.getLong()
+      val low  = bb.getLong()
+      new UUID(high, low)
+    }
+  )
 }

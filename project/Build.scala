@@ -44,7 +44,21 @@ object Build extends AutoPlugin {
       headers := Map("scala" -> Apache2_0("2016", "Dan Di Spaltro")),
       // Release process
       publishMavenStyle := true
-    )
+    ) ++ extras
+
+  lazy val extras: Seq[Setting[_]] = Seq(
+    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 11)) =>
+        Seq(compilerPlugin("com.milessabin" % "si2712fix-plugin" % Version.Si2712fix cross CrossVersion.full))
+      case _ => Nil
+    }),
+    scalacOptions := {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 11)) => scalacOptions.value
+        case _             => scalacOptions.value.filterNot(_.equals("-Yinline-warnings")) ++ Seq("-Ypartial-unification")
+      }
+    }
+  )
 
   def publishSettings =
     Seq(

@@ -1,8 +1,11 @@
 package com.dispalt.vitess
 
+import java.nio.ByteBuffer
+import java.util.UUID
+
 import com.google.common.primitives.UnsignedLong
 import com.google.protobuf.ByteString
-import com.youtube.vitess.proto.query.{ BindVariable, BoundQuery, Type, Value }
+import com.youtube.vitess.proto.query.{BindVariable, BoundQuery, Type, Value}
 
 object Proto {
 
@@ -48,6 +51,11 @@ object Proto {
 
         Type.DECIMAL -> ByteString.copyFromUtf8(res.toString)
       case n: Number => (Type.INT64, ByteString.copyFromUtf8(n.toString))
+      case n: UUID =>
+        val bb = ByteBuffer.wrap(new Array[Byte](16))
+        bb.putLong(n.getMostSignificantBits)
+        bb.putLong(n.getLeastSignificantBits)
+        (Type.BINARY, ByteString.copyFrom(bb))
       case _         => throw new IllegalArgumentException("unsupported type for Value proto: " + obj.getClass)
 
     }
