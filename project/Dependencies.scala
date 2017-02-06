@@ -2,14 +2,14 @@ import sbt._
 import Keys._
 
 object Version {
-  final val GrpcNetty = "1.0.1"
+  final val GrpcNetty = "1.1.1"
   final val Guava     = "19.0"
   final val Lenses    = "0.4.7"
-  final val Netty     = "4.1.6.Final"
+  final val Netty     = "4.1.8.Final"
   final val Quill     = "1.0.0"
   final val Scala     = "2.11.8"
   final val ScalaLog  = "3.5.0"
-  final val ScalaPB   = "0.5.45"
+  final val ScalaPB   = "0.5.47"
   final val ScalaTest = "3.0.0"
   final val Slf4j     = "1.7.21"
 }

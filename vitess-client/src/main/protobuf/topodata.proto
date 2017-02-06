@@ -78,11 +78,12 @@ enum TabletType {
   // startup time.  No queries can be served in RESTORE mode.
   RESTORE = 7;
 
-  // WORKER is the type a server goes into when used by a vtworker
-  // process to perform an offline action. It is a serving type (as
-  // the vtworker processes may need queries to run). In this state,
-  // this tablet is dedicated to the vtworker process that uses it.
-  WORKER = 8;
+  // DRAINED is the type a server goes into when used by Vitess tools
+  // to perform an offline action. It is a serving type (as
+  // the tools processes may need to run queries), but it's not used
+  // to route queries from Vitess users. In this state,
+  // this tablet is dedicated to the process that uses it.
+  DRAINED = 8;
 }
 
 // Tablet represents information about a running instance of vttablet.
@@ -280,4 +281,19 @@ message SrvKeyspace {
   repeated ServedFrom served_from = 4;
   // OBSOLETE int32 split_shard_count = 5;
   reserved 5;
+}
+
+// CellInfo contains information about a cell. CellInfo objects are
+// stored in the global topology server, and describe how to reach
+// local topology servers.
+message CellInfo {
+  // ServerAddress contains the address of the server for the cell.
+  // The syntax of this field is topology implementation specific.
+  // For instance, for Zookeeper, it is a comma-separated list of
+  // server addresses.
+  string server_address = 1;
+
+  // Root is the path to store data in. It is only used when talking
+  // to server_address.
+  string root = 2;
 }

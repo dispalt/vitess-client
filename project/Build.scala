@@ -3,8 +3,6 @@ import com.typesafe.sbt.GitPlugin.autoImport._
 import de.heikoseeberger.sbtheader.HeaderPlugin
 import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport._
 import de.heikoseeberger.sbtheader.license._
-import org.scalafmt.sbt.ScalaFmtPlugin
-import org.scalafmt.sbt.ScalaFmtPlugin.autoImport._
 import sbt._
 import sbt.plugins.JvmPlugin
 import sbt.Keys._
@@ -15,7 +13,7 @@ import com.typesafe.sbt.pgp.PgpKeys._
 object Build extends AutoPlugin {
 
   override def requires =
-    JvmPlugin && HeaderPlugin && ScalaFmtPlugin
+    JvmPlugin && HeaderPlugin
 
   override def trigger = allRequirements
 
@@ -40,8 +38,6 @@ object Build extends AutoPlugin {
       resolvers += Resolver.jcenterRepo,
       unmanagedSourceDirectories.in(Compile) := Vector(scalaSource.in(Compile).value),
       unmanagedSourceDirectories.in(Test) := Vector(scalaSource.in(Test).value),
-      // scalafmt settings
-      scalafmtConfig := Some(baseDirectory.in(ThisBuild).value / ".scalafmt.conf"),
       // Git settings
       git.useGitDescribe := true,
       // Header settings
