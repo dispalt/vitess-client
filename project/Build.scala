@@ -1,5 +1,6 @@
 import com.typesafe.sbt.GitPlugin
 import com.typesafe.sbt.GitPlugin.autoImport._
+import com.typesafe.sbt.pgp.PgpKeys
 import de.heikoseeberger.sbtheader.HeaderPlugin
 import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport._
 import de.heikoseeberger.sbtheader.license._
@@ -44,7 +45,9 @@ object Build extends AutoPlugin {
       headers := Map("scala" -> Apache2_0("2016", "Dan Di Spaltro")),
       // Release process
       publishMavenStyle := true
-    ) ++ extras
+    ) ++
+      extras ++
+      releaseSettings
 
   lazy val extras: Seq[Setting[_]] = Seq(
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
@@ -60,11 +63,82 @@ object Build extends AutoPlugin {
     }
   )
 
+  // Borrowed from the awesome people at https://github.com/getquill/quill/blob/master/build.sbt
+  def updateReadmeVersion(selectVersion: sbtrelease.Versions => String) =
+    ReleaseStep(action = st => {
+
+      val newVersion = selectVersion(st.get(ReleaseKeys.versions).get)
+
+      import scala.io.Source
+      import java.io.PrintWriter
+
+      val pattern = """"com.dispalt" %% "vitess-.*" % "(.*)"""".r
+
+      val fileName = "README.md"
+      val content  = Source.fromFile(fileName).getLines.mkString("\n")
+
+      val newContent =
+        pattern.replaceAllIn(content, m => m.matched.replaceAllLiterally(m.subgroups.head, newVersion))
+
+      new PrintWriter(fileName) { write(newContent); close }
+
+      val vcs = Project.extract(st).get(releaseVcs).get
+      vcs.add(fileName).!
+
+      st
+    })
+
+  def publishSettings =
+    Seq(
+      publishTo := {
+        val nexus = "https://oss.sonatype.org/"
+        if (isSnapshot.value)
+          Some("snapshots" at nexus + "content/repositories/snapshots")
+        else
+          Some("releases" at nexus + "service/local/staging/deploy/maven2")
+      },
+      pomExtra :=
+        <scm>
+          <connection>scm:git:https://github.com/dispalt/vitess-client.git</connection>
+          <developerConnection>scm:git:git@github.com:dispalt/vitess-client.git</developerConnection>
+          <url>http://github.com/dispalt/vitess-client/tree/master</url>
+        </scm>
+          <developers>
+            <developer>
+              <id>dispalt</id>
+              <name>Dan Di Spaltro</name>
+              <organizationUrl>http://dispalt.com</organizationUrl>
+            </developer>
+          </developers>
+    )
+
+  def releaseSettings = publishSettings ++ Seq(
+    releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+    releaseProcess := Seq[ReleaseStep](
+      checkSnapshotDependencies,
+      inquireVersions,
+      runClean,
+      runTest,
+      setReleaseVersion,
+      updateReadmeVersion(_._1),
+      commitReleaseVersion,
+      tagRelease,
+      ReleaseStep(action = Command.process("publishSigned", _)),
+      setNextVersion,
+      updateReadmeVersion(_._2),
+      commitNextVersion,
+      ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+      pushChanges
+    )
+  )
+
   def preventPublication =
-    Seq(publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
-        publishArtifact := false,
-        publish := (),
-        publishLocalSigned := (), // doesn't work
-        publishSigned := (), // doesn't work
-        packagedArtifacts := Map.empty) // doesn't work - https://github.com/sbt/sbt-pgp/issues/42
+    Seq(
+      publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
+      publishArtifact := false,
+      publish := (),
+      publishLocalSigned := (), // doesn't work
+      publishSigned := (), // doesn't work
+      packagedArtifacts := Map.empty
+    ) // doesn't work - https://github.com/sbt/sbt-pgp/issues/42
 }
