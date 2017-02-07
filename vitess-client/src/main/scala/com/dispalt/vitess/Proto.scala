@@ -71,7 +71,7 @@ object Proto {
         val bb = ByteBuffer.wrap(new Array[Byte](16))
         bb.putLong(n.getMostSignificantBits)
         bb.putLong(n.getLeastSignificantBits)
-        (Type.BINARY, ByteString.copyFrom(bb))
+        (Type.BINARY, ByteString.copyFrom(bb.array()))
       case _         => throw new IllegalArgumentException("unsupported type for Value proto: " + obj.getClass)
 
     }
