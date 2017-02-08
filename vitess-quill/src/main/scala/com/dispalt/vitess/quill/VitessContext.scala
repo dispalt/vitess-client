@@ -231,7 +231,10 @@ trait VitessDecoder { this: VitessContext[_] =>
 
   implicit def optionDecoder[T](implicit d: Decoder[T]): Decoder[Option[T]] =
     VDecoder((index, row) => {
-      Option(row.get[T](index))
+      row.get[T](index) match {
+        case null => None
+        case _    => Some(d(index, row))
+      }
     })
 
   implicit def mappedDecoder[I, O](implicit mapped: MappedEncoding[I, O], decoder: Decoder[I]): Decoder[O] =

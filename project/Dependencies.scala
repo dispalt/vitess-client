@@ -2,7 +2,7 @@ import sbt._
 import Keys._
 
 object Version {
-  final val GrpcNetty = "1.1.1"
+  final val GrpcNetty = "1.0.3"
   final val Guava     = "19.0"
   final val Lenses    = "0.4.7"
   final val Netty     = "4.1.8.Final"
