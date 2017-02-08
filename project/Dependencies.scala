@@ -5,7 +5,7 @@ object Version {
   final val GrpcNetty = "1.0.3"
   final val Guava     = "19.0"
   final val Lenses    = "0.4.7"
-  final val Netty     = "4.1.8.Final"
+  final val Netty     = "4.1.6.Final"
   final val Quill     = "1.1.0"
   final val Scala     = "2.11.8"
   final val ScalaLog  = "3.5.0"
