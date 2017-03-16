@@ -17,7 +17,9 @@ lazy val `vitess-client` =
       PB.targets in Compile := Seq(
         scalapb.gen(singleLineToString = true) -> (sourceManaged in Compile).value
       ),
-      libraryDependencies ++= Library.Client.dependenciesToShade ++ Library.Client.nonShadedDependencies
+      libraryDependencies ++= Library.Client.dependenciesToShade ++ Library.Client.nonShadedDependencies ++ Seq(
+        Library.scalaTest % Test
+      )
     )
 
 lazy val `vitess-shade` =
