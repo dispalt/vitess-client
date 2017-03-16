@@ -7,17 +7,19 @@ lazy val `vitess` =
     .in(file("."))
     .enablePlugins(AutomateHeaderPlugin, GitVersioning)
     .settings(Build.preventPublication)
+    .settings(Build.commonSettings)
     .aggregate(`vitess-shade`, `vitess-quill`, `vitess-client`)
 
 lazy val `vitess-client` =
   project
     .in(file("vitess-client"))
     .enablePlugins(AutomateHeaderPlugin)
+    .enablePlugins(CrossPerProjectPlugin)
+    .settings(Build.commonSettings)
     .settings(
       PB.targets in Compile := Seq(
         scalapb.gen(singleLineToString = true) -> (sourceManaged in Compile).value
       ),
-      crossScalaVersions := Seq(Version.Scala211, Version.Scala212),
       libraryDependencies ++= Library.Client.dependenciesToShade ++ Library.Client.nonShadedDependencies ++ Seq(
         Library.scalaTest % Test
       )
@@ -27,9 +29,9 @@ lazy val `vitess-shade` =
   project
     .in(file("vitess-shade"))
     .enablePlugins(AutomateHeaderPlugin)
+    .enablePlugins(CrossPerProjectPlugin)
+    .settings(Build.commonSettings)
     .settings(
-      // Cross build this too
-      crossScalaVersions := Seq(Version.Scala211, Version.Scala212),
       // Just get whatever asset is built in vitess-client
       exportedProducts in Compile := (exportedProducts in Compile in `vitess-client`).value,
       // This is the total classpath stolen from the non shaded version
@@ -71,9 +73,12 @@ lazy val `vitess-quill` =
   project
     .in(file("vitess-quill"))
     .enablePlugins(AutomateHeaderPlugin)
+    .enablePlugins(CrossPerProjectPlugin)
+    .settings(Build.commonSettings)
     .settings(
       libraryDependencies ++= Seq(
         Library.`quill-sql`
       ),
+      crossScalaVersions := Seq(Version.Scala211),
       unmanagedJars in Compile := Seq((assembly in (`vitess-shade`, assembly)).value).classpath
     )

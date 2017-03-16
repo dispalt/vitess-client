@@ -11,18 +11,14 @@ import sbtrelease.ReleasePlugin.autoImport.{ ReleaseStep, _ }
 import sbtrelease.ReleaseStateTransformations._
 import com.typesafe.sbt.pgp.PgpKeys._
 
-object Build extends AutoPlugin {
+object Build  {
 
-  override def requires =
-    JvmPlugin && HeaderPlugin
 
-  override def trigger = allRequirements
-
-  override def projectSettings =
-    Vector(
+  def commonSettings =
+    Seq(
       // Core settings
       organization := "com.dispalt",
-      crossScalaVersions := Seq(scalaVersion.value), // Add 2.12 when quill upgrades
+      crossScalaVersions := Seq(Version.Scala211, Version.Scala212), // Add 2.12 when quill upgrades
       licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0")),
       homepage := Some(url("https://github.com/dispalt/vitess-client")),
       description := "Vitess client including quill bindings.",
@@ -42,7 +38,7 @@ object Build extends AutoPlugin {
       // Git settings
       git.useGitDescribe := true,
       // Header settings
-      headers := Map("scala" -> Apache2_0("2016", "Dan Di Spaltro")),
+      headers := Map("scala" -> Apache2_0("2016-2017", "Dan Di Spaltro")),
       // Release process
       publishMavenStyle := true
     ) ++
@@ -88,7 +84,7 @@ object Build extends AutoPlugin {
       st
     })
 
-  def publishSettings =
+  val publishSettings =
     Seq(
       publishTo := {
         val nexus = "https://oss.sonatype.org/"
@@ -112,22 +108,25 @@ object Build extends AutoPlugin {
           </developers>
     )
 
-  def releaseSettings = publishSettings ++ Seq(
+  val releaseSettings = publishSettings ++ Seq(
     releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+    releaseCrossBuild := false,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
       runClean,
-      runTest,
+      releaseStepCommandAndRemaining("+test"),
       setReleaseVersion,
       updateReadmeVersion(_._1),
       commitReleaseVersion,
       tagRelease,
-      ReleaseStep(action = Command.process("publishSigned", _), enableCrossBuild = true),
+      releaseStepCommandAndRemaining("+publishSigned"),
+//      ReleaseStep(action = Command.process("publishSigned", _), enableCrossBuild = true),
       setNextVersion,
       updateReadmeVersion(_._2),
       commitNextVersion,
-      ReleaseStep(action = Command.process("sonatypeReleaseAll", _), enableCrossBuild = true),
+      releaseStepCommandAndRemaining("+sonatypeReleaseAll"),
+//      ReleaseStep(action = Command.process("sonatypeReleaseAll", _), enableCrossBuild = true),
       pushChanges
     )
   )
@@ -139,6 +138,7 @@ object Build extends AutoPlugin {
       publish := (),
       publishLocalSigned := (), // doesn't work
       publishSigned := (), // doesn't work
-      packagedArtifacts := Map.empty
+      packagedArtifacts := Map.empty,
+      releaseProcess := Seq.empty
     ) // doesn't work - https://github.com/sbt/sbt-pgp/issues/42
 }
