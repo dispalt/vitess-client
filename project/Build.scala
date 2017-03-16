@@ -123,11 +123,11 @@ object Build extends AutoPlugin {
       updateReadmeVersion(_._1),
       commitReleaseVersion,
       tagRelease,
-      ReleaseStep(action = Command.process("publishSigned", _)),
+      ReleaseStep(action = Command.process("publishSigned", _), enableCrossBuild = true),
       setNextVersion,
       updateReadmeVersion(_._2),
       commitNextVersion,
-      ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+      ReleaseStep(action = Command.process("sonatypeReleaseAll", _), enableCrossBuild = true),
       pushChanges
     )
   )

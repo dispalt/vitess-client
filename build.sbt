@@ -17,6 +17,7 @@ lazy val `vitess-client` =
       PB.targets in Compile := Seq(
         scalapb.gen(singleLineToString = true) -> (sourceManaged in Compile).value
       ),
+      crossScalaVersions := Seq(Version.Scala211, Version.Scala212),
       libraryDependencies ++= Library.Client.dependenciesToShade ++ Library.Client.nonShadedDependencies ++ Seq(
         Library.scalaTest % Test
       )
@@ -27,6 +28,8 @@ lazy val `vitess-shade` =
     .in(file("vitess-shade"))
     .enablePlugins(AutomateHeaderPlugin)
     .settings(
+      // Cross build this too
+      crossScalaVersions := Seq(Version.Scala211, Version.Scala212),
       // Just get whatever asset is built in vitess-client
       exportedProducts in Compile := (exportedProducts in Compile in `vitess-client`).value,
       // This is the total classpath stolen from the non shaded version
