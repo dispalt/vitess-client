@@ -14,7 +14,8 @@ which is a great lightweight compile-time SQL abstraction.
 
 ## Quick start
 
-Currently this only supports Scala `2.11` until [quill#617](https://github.com/getquill/quill/pull/617) lands.
+Currently only `vitess-quill` supports Scala `2.11` until [quill#617](https://github.com/getquill/quill/pull/617) lands.
+`vitess-client` and `vitess-shade` both support `2.11` and `2.12`
 
 ### SBT
 
@@ -22,7 +23,7 @@ In your `build.sbt` include the build coordinates hosted on maven like so.
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.dispalt" %% "vitess-client" % "0.4.10-SNAPSHOT"
+  "com.dispalt" %% "vitess-client" % "0.4.9"
 )
 ```
 
@@ -30,7 +31,7 @@ Or to use the shaded version instead, include the following artifact.
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.dispalt" %% "vitess-shade" % "0.4.10-SNAPSHOT"
+  "com.dispalt" %% "vitess-shade" % "0.4.9"
 )
 ```
 
@@ -41,11 +42,11 @@ so if you want to use the shaded version, exclude the dependency and
 
 ```scala
 libraryDependencies ++= Seq(
-  "com.dispalt" %% "vitess-quill" % "0.4.10-SNAPSHOT"
+  "com.dispalt" %% "vitess-quill" % "0.4.9"
 )
 ```
 
-The current version `0.4.3` supports [Quill](getquill.io) `1.1.0`
+The current version `0.4.x` supports [Quill](getquill.io) `1.1.0`
 
 # License
 
