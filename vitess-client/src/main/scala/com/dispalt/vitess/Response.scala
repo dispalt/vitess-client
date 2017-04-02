@@ -110,6 +110,8 @@ object Row {
       case YEAR                                                    => java.lang.Short.valueOf(value.toStringUtf8)
       case ENUM | SET                                              => value.toStringUtf8
       case BIT | TEXT | BLOB | VARCHAR | VARBINARY | CHAR | BINARY => value.toByteArray
+      // Newer types
+      case JSON => value.toByteArray
       case _ =>
         throw new Exception("unknown field type: " + field.`type`)
     }
