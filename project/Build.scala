@@ -30,7 +30,8 @@ object Build  {
         "-language:_",
         "-target:jvm-1.8",
         "-encoding",
-        "UTF-8"
+        "UTF-8",
+        "-Ypartial-unification"
       ),
       resolvers += Resolver.jcenterRepo,
       unmanagedSourceDirectories.in(Compile) := Vector(scalaSource.in(Compile).value),
@@ -46,15 +47,10 @@ object Build  {
       releaseSettings
 
   lazy val extras: Seq[Setting[_]] = Seq(
-    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 11)) =>
-        Seq(compilerPlugin("com.milessabin" % "si2712fix-plugin" % Version.Si2712fix cross CrossVersion.full))
-      case _ => Nil
-    }),
     scalacOptions := {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 11)) => scalacOptions.value
-        case _             => scalacOptions.value.filterNot(_.equals("-Yinline-warnings")) ++ Seq("-Ypartial-unification")
+        case _             => scalacOptions.value.filterNot(_.equals("-Yinline-warnings"))
       }
     }
   )
@@ -125,7 +121,7 @@ object Build  {
       setNextVersion,
       updateReadmeVersion(_._2),
       commitNextVersion,
-      releaseStepCommandAndRemaining("+sonatypeReleaseAll"),
+      releaseStepCommandAndRemaining("sonatypeReleaseAll"),
 //      ReleaseStep(action = Command.process("sonatypeReleaseAll", _), enableCrossBuild = true),
       pushChanges
     )
