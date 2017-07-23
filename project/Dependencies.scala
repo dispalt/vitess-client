@@ -6,10 +6,10 @@ object Version {
   final val Scala211 = "2.11.11"
   final val Scala212 = "2.12.2"
 
-  final val GrpcNetty = "1.1.2"
+  final val GrpcNetty = com.trueaccord.scalapb.compiler.Version.grpcJavaVersion
   final val Guava     = "19.0"
   final val Lenses    = "0.4.7"
-  final val Netty     = "4.1.6.Final"
+  final val Netty     = "4.1.11.Final"
   final val Quill     = "1.2.1"
   final val ScalaLog  = "3.5.0"
   final val ScalaPB   = com.trueaccord.scalapb.compiler.Version.scalapbVersion
