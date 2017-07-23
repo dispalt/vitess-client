@@ -1,8 +1,8 @@
 // Plugins
 
-addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.6")
+addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.11")
 
-libraryDependencies += "com.trueaccord.scalapb" %% "compilerplugin" % "0.6.0-pre2"
+libraryDependencies += "com.trueaccord.scalapb" %% "compilerplugin" % "0.6.1"
 
 addSbtPlugin("com.typesafe.sbt"  % "sbt-git"      % "0.8.5")
 addSbtPlugin("de.heikoseeberger" % "sbt-header"   % "1.6.0")

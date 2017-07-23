@@ -50,18 +50,31 @@ case class FieldMap(fields: Seq[Field]) {
 class Row(fields: FieldMap, values: Seq[ByteString]) {
   def getObj(name: String): Option[Any] = {
     fields.getT(name).map {
-      case (f, idx) => Row.convertFieldValue(f, values(idx))
+      case (f, idx) =>
+        val value = values(idx)
+        if (value == null)
+          null
+        else
+          Row.convertFieldValue(f, values(idx))
     }
   }
 
   def get[T](idx: Int): T = {
     val f = fields.get(idx)
-    Row.convertFieldValue(f, values(idx)).asInstanceOf[T]
+    val value = values(idx)
+    if (value == null)
+      null.asInstanceOf[T]
+    else
+      Row.convertFieldValue(f, value).asInstanceOf[T]
   }
 
   def getAny(idx: Int): Any = {
     val f = fields.get(idx)
-    Row.convertFieldValue(f, values(idx))
+    val value = values(idx)
+    if (value == null)
+      null
+    else
+      Row.convertFieldValue(f, values(idx))
   }
 }
 
