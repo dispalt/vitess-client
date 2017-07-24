@@ -14,8 +14,7 @@ which is a great lightweight compile-time SQL abstraction.
 
 ## Quick start
 
-Currently only `vitess-quill` supports Scala `2.11` until [quill#617](https://github.com/getquill/quill/pull/617) lands.
-`vitess-client` and `vitess-shade` both support `2.11` and `2.12`
+Currently `vitess-quill`, `vitess-client` and `vitess-shade` both support `2.11` and `2.12`
 
 ### SBT
 
@@ -46,7 +45,7 @@ libraryDependencies ++= Seq(
 )
 ```
 
-The current version `0.4.x` supports [Quill](getquill.io) `1.1.0`
+The current version `0.6.x` supports [Quill](getquill.io) `1.2.1`
 
 # License
 

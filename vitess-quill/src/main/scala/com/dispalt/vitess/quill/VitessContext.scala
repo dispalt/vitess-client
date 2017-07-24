@@ -111,6 +111,9 @@ class VitessContext[Naming <: NamingStrategy](client: ManagedClient, _ctx: Vites
 
   }
 
+  def executeQuerySingle[T](sql: String, prepare: PrepareRow => PrepareRow = identity, extractor: Row => T = identity[Row] _)(implicit ec: ExecutionContext, ctx: VitessCallerCtx): Future[T] =
+    executeQuery(sql, prepare, extractor).map(handleSingleResult)
+
   def executeAction[T](
       sql: String,
       prepare: PrepareRow => PrepareRow = identity
